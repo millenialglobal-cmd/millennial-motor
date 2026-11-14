@@ -1,0 +1,11 @@
+MILLENNIAL GLOBAL - COMPILACION DEL MOTOR
+
+Esta carpeta se sube a un repositorio de GitHub. GitHub compila el servidor Canary
+(version del 7 de octubre de 2026) con nuestros parches y te deja un archivo
+descargable llamado "canary-motor".
+
+  .github/workflows/compilar.yml   -> el flujo que GitHub ejecuta (boton "Run workflow")
+  docker/Dockerfile.mg             -> la receta de compilacion (copia de la oficial)
+  parches/001-aviso-skill.patch    -> parche 1: corrige el aviso de subida de skill
+
+Cada parche nuevo que preparemos se sube a la carpeta "parches" y se vuelve a ejecutar el flujo.

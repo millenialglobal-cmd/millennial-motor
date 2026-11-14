@@ -1,0 +1,102 @@
+diff --git a/src/canary_server.cpp b/src/canary_server.cpp
+index 6093e084..ddb317d3 100644
+--- a/src/canary_server.cpp
++++ b/src/canary_server.cpp
+@@ -307,6 +307,7 @@ int CanaryServer::run() {
+ 	}
+ 
+ 	logger.info("{} {}", g_configManager().getString(SERVER_NAME), "server online!");
++	logger.info("[MG] Motor Millennial Global: parche 1 activo (aviso de skill corregido).");
+ 	g_logger().setLevel(g_configManager().getString(LOGLEVEL));
+ 	g_dispatcher().setQueueLatencyLoggingEnabled(true);
+ 
+diff --git a/src/creatures/players/player.cpp b/src/creatures/players/player.cpp
+index d1b12e93..3ae8ccd1 100644
+--- a/src/creatures/players/player.cpp
++++ b/src/creatures/players/player.cpp
+@@ -1214,7 +1214,7 @@ void Player::addSkillAdvance(skills_t skill, uint64_t count) {
+ 		if (skill == SKILL_LEVEL) {
+ 			sendTakeScreenshot(SCREENSHOT_TYPE_LEVELUP);
+ 		} else {
+-			sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, static_cast<uint8_t>(getCipbiaSkill(skill)), skills[skill].level);
++			sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, getSkillupToastId(skill), skills[skill].level);
+ 		}
+ 
+ 		g_creatureEvents().playerAdvance(static_self_cast<Player>(), skill, (skills[skill].level - 1), skills[skill].level);
+@@ -3579,7 +3579,7 @@ void Player::addManaSpent(uint64_t amount) {
+ 		std::ostringstream ss;
+ 		ss << "You advanced to magic level " << magLevel << '.';
+ 		sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
+-		sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, static_cast<uint8_t>(getCipbiaSkill(SKILL_MAGLEVEL)), magLevel);
++		sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, getSkillupToastId(SKILL_MAGLEVEL), magLevel);
+ 
+ 		g_creatureEvents().playerAdvance(static_self_cast<Player>(), SKILL_MAGLEVEL, magLevel - 1, magLevel);
+ 
+@@ -8175,7 +8175,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries) {
+ 			std::ostringstream ss;
+ 			ss << "You advanced to magic level " << magLevel << '.';
+ 			sendTextMessage(MESSAGE_EVENT_ADVANCE, ss.str());
+-			sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, static_cast<uint8_t>(getCipbiaSkill(SKILL_MAGLEVEL)), magLevel);
++			sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, getSkillupToastId(SKILL_MAGLEVEL), magLevel);
+ 		}
+ 
+ 		uint8_t newPercent;
+@@ -8235,7 +8235,7 @@ bool Player::addOfflineTrainingTries(skills_t skill, uint64_t tries) {
+ 			if (skill == SKILL_LEVEL) {
+ 				sendTakeScreenshot(SCREENSHOT_TYPE_LEVELUP);
+ 			} else {
+-				sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, static_cast<uint8_t>(getCipbiaSkill(skill)), skills[skill].level);
++				sendTakeScreenshot(SCREENSHOT_TYPE_SKILLUP, getSkillupToastId(skill), skills[skill].level);
+ 			}
+ 		}
+ 
+diff --git a/src/utils/tools.cpp b/src/utils/tools.cpp
+index 932a9ad7..67de14dd 100644
+--- a/src/utils/tools.cpp
++++ b/src/utils/tools.cpp
+@@ -2088,6 +2088,32 @@ CipbiaSkills_t getCipbiaSkill(skills_t skill) {
+ 	}
+ }
+ 
++// Millennial Global: el cliente 15.25 espera estos numeros en el aviso de subida de skill
++// (1 Magic Level, 2 Sword, 3 Club, 4 Axe, 5 Fist, 6 Distance, 7 Shielding, 8 Fishing).
++// Los numeros de getCipbiaSkill() no coinciden con los de ese aviso y mostraban otra skill.
++uint8_t getSkillupToastId(skills_t skill) {
++	switch (skill) {
++		case SKILL_MAGLEVEL:
++			return 1;
++		case SKILL_SWORD:
++			return 2;
++		case SKILL_CLUB:
++			return 3;
++		case SKILL_AXE:
++			return 4;
++		case SKILL_FIST:
++			return 5;
++		case SKILL_DISTANCE:
++			return 6;
++		case SKILL_SHIELD:
++			return 7;
++		case SKILL_FISHING:
++			return 8;
++		default:
++			return 0;
++	}
++}
++
+ CombatType_t getCombatFromCipbiaElement(Cipbia_Elementals_t cipbiaElement) {
+ 	switch (cipbiaElement) {
+ 		case CIPBIA_ELEMENTAL_PHYSICAL:
+diff --git a/src/utils/tools.hpp b/src/utils/tools.hpp
+index a5886909..d43b4aa4 100644
+--- a/src/utils/tools.hpp
++++ b/src/utils/tools.hpp
+@@ -191,6 +191,8 @@ std::string getFormattedTimeRemaining(uint32_t time);
+ 
+ unsigned int getNumberOfCores();
+ CipbiaSkills_t getCipbiaSkill(skills_t skill);
++// Millennial Global: numero de skill que espera el cliente 15.25 en el aviso de subida de skill
++uint8_t getSkillupToastId(skills_t skill);
+ skills_t getSkillsFromCipbiaSkill(CipbiaSkills_t cipbiaSkills);
+ 
+ CombatType_t getCombatFromCipbiaElement(Cipbia_Elementals_t combatType);
