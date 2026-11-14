@@ -1,0 +1,77 @@
+name: Compilar motor Millennial Global
+
+on:
+  workflow_dispatch:
+
+env:
+  # Version exacta de Canary sobre la que se compila: la de tu servidor (7 de octubre de 2026).
+  CANARY_COMMIT: 09fde48ffa9afaf5c424bde460ec0c4c7c734e51
+
+jobs:
+  compilar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    steps:
+      - name: Descargar nuestros archivos
+        uses: actions/checkout@v4
+        with:
+          path: ours
+
+      - name: Descargar Canary (version exacta)
+        uses: actions/checkout@v4
+        with:
+          repository: opentibiabr/canary
+          ref: ${{ env.CANARY_COMMIT }}
+          path: canary
+
+      - name: Liberar espacio en disco
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL /usr/local/share/boost /usr/share/swift || true
+          sudo docker image prune --all --force || true
+          df -h /
+
+      - name: Aplicar los parches
+        working-directory: canary
+        run: |
+          shopt -s nullglob
+          for p in ../ours/*.patch; do
+            echo "== Aplicando $p"
+            git apply --check "$p"
+            git apply "$p"
+          done
+          git status --short
+
+      - name: Copiar la receta de compilacion
+        run: cp ours/Dockerfile.mg canary/Dockerfile.mg
+
+      - name: Preparar la cache de GitHub
+        uses: crazy-max/ghaction-github-runtime@v3
+
+      - name: Preparar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compilar
+        uses: docker/build-push-action@v6
+        with:
+          context: canary
+          file: canary/Dockerfile.mg
+          target: export
+          outputs: type=local,dest=out
+          cache-from: type=gha
+          cache-to: type=gha,mode=max,ignore-error=true
+
+      - name: Comprobar el resultado
+        run: |
+          ls -la out
+          file out/canary
+          sha256sum out/canary
+          ldd out/canary | head -40 || true
+
+      - name: Guardar el programa compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: canary-motor
+          path: out/canary
+          retention-days: 30
+          compression-level: 9
+          if-no-files-found: error
